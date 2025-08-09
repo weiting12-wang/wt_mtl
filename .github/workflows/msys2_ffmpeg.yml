@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - id: ffmpeg_compose
-        uses: OpenVisualCloud/Media-Transport-Library@b40e87a160b3a553413c7661d8e5969bdea457ec # main
+        uses: OpenVisualCloud/Media-Transport-Library@9168009c866de372ef5bde58cb810d736b70ecd4 # main
         with:
           sys: ${{matrix.sys}}
           dpdk: ${{matrix.dpdk}}
