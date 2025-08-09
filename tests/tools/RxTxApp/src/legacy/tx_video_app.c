@@ -157,6 +157,10 @@ static void app_tx_video_build_frame(struct st_app_tx_video_session* s, void* fr
   if (!s->ctx->tx_copy_once || !s->st20_frames_copied) {
     mtl_memcpy(frame, src, frame_size);
   }
+  //weiting
+  int fps = s->expect_fps > 0 ? s->expect_fps : 25;
+  usleep(1000000 / fps);
+  //weiting
   /* point to next frame */
   s->st20_frame_cursor += frame_size;
   if (s->st20_frame_cursor + frame_size > s->st20_source_end) {

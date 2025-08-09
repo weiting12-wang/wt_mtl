@@ -21,7 +21,11 @@ if get_option('buildtype') != 'debug'
 endif
 st22_avcodec_plugin_c_args += ['-Wall']
 #simd build option, enable sse4.2 default, todo: do we need AVX2/AVX512?
-st22_avcodec_plugin_c_args += ['-msse4.2']
+#st22_avcodec_plugin_c_args += ['-msse4.2']
+
+if host_machine.cpu_family() == 'x86_64'
+  st22_avcodec_plugin_c_args += ['-msse4.2']
+endif
 
 st22_avcodec_plugin_ld_args = []
 

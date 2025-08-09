@@ -1248,6 +1248,27 @@ int mtl_port_ip_info(mtl_handle mt, enum mtl_port port, uint8_t ip[MTL_IP_ADDR_L
   return 0;
 }
 
+#include <rte_config.h>
+
+#if defined(__x86_64__) || defined(__i386__)
+#include <rte_cpuflags.h>
+#endif
+
+enum mtl_simd_level mtl_get_simd_level(void) {
+#if defined(__x86_64__) || defined(__i386__)
+  if (rte_cpu_get_flag_enabled(RTE_CPUFLAG_AVX512VBMI2))
+    return MTL_SIMD_LEVEL_AVX512VBMI2;
+  if (rte_cpu_get_flag_enabled(RTE_CPUFLAG_AVX512VL))
+    return MTL_SIMD_LEVEL_AVX512;
+  if (rte_cpu_get_flag_enabled(RTE_CPUFLAG_AVX2))
+    return MTL_SIMD_LEVEL_AVX2;
+#endif
+  return MTL_SIMD_LEVEL_NONE;
+}
+
+
+
+#if 0
 enum mtl_simd_level mtl_get_simd_level(void) {
   if (rte_cpu_get_flag_enabled(RTE_CPUFLAG_AVX512VBMI2))
     return MTL_SIMD_LEVEL_AVX512_VBMI2;
@@ -1256,7 +1277,7 @@ enum mtl_simd_level mtl_get_simd_level(void) {
   /* no simd */
   return MTL_SIMD_LEVEL_NONE;
 }
-
+#endif
 static const char* mt_simd_level_names[MTL_SIMD_LEVEL_MAX] = {
     "none",
     "avx2",

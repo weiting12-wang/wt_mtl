@@ -156,8 +156,10 @@ static uint64_t app_ptp_from_tai_time(void* priv) {
 static void user_param_init(struct st_app_context* ctx, struct mtl_init_params* p) {
   memset(p, 0x0, sizeof(*p));
 
-  p->pmd[MTL_PORT_P] = MTL_PMD_DPDK_USER;
-  p->pmd[MTL_PORT_R] = MTL_PMD_DPDK_USER;
+  //p->pmd[MTL_PORT_P] = MTL_PMD_DPDK_USER;
+  //p->pmd[MTL_PORT_R] = MTL_PMD_DPDK_USER;
+  p->pmd[MTL_PORT_P] = MTL_PMD_KERNEL_SOCKET;;
+  p->pmd[MTL_PORT_R] = MTL_PMD_KERNEL_SOCKET;
   p->flags |= MTL_FLAG_BIND_NUMA; /* default bind to numa */
   p->flags |= MTL_FLAG_TX_VIDEO_MIGRATE;
   p->flags |= MTL_FLAG_RX_VIDEO_MIGRATE;
@@ -411,7 +413,7 @@ int main(int argc, char** argv) {
             st_tx_sessions_queue_cnt(tx_st20_sessions, ctx->tx_audio_session_cnt,
                                      ctx->tx_anc_session_cnt, ctx->tx_fmd_session_cnt);
       }
-      if (ctx->para.tx_queues_cnt[i] && (ctx->para.pmd[i] == MTL_PMD_DPDK_USER)) {
+      if (ctx->para.tx_queues_cnt[i] && (ctx->para.pmd[i] == MTL_PMD_KERNEL_SOCKET)) {//MTL_PMD_DPDK_USER)) {
         ctx->para.tx_queues_cnt[i] += 4; /* add extra 4 queues for recovery */
       }
     }

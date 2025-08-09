@@ -131,6 +131,10 @@ int main(int argc, char** argv) {
   ret = tx_sample_parse_args(&ctx, argc, argv);
   if (ret < 0) return ret;
 
+  ctx.param.flags |= MTL_FLAG_TASKLET_THREAD;  // 開啟 thread 模式 weiting
+  ctx.param.flags |= MTL_FLAG_TASKLET_SLEEP;  // 開啟 thread 模式 weiting
+  ctx.param.flags |= MTL_FLAG_TX_VIDEO_MIGRATE;  // 開啟 thread 模式 weiting
+
   /* enable auto start/stop */
   ctx.param.flags |= MTL_FLAG_DEV_AUTO_START_STOP;
   ctx.st = mtl_init(&ctx.param);
