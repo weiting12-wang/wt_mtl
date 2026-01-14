@@ -464,7 +464,7 @@ static int wt_tx22_frame_done(void* priv, uint16_t frame_idx,
     return 0;
 }
 
-
+#if 0
 /* ===== ST30p Callbacks (Audio) ===== */
 /* ST30p: 送完一個 frame 的通知 */
 static int wt_tx30p_frame_done(void* priv, struct st30_frame* frame) {
@@ -484,7 +484,7 @@ static int wt_tx30p_frame_done(void* priv, struct st30_frame* frame) {
 
     return 0;
 }
-
+#endif 
 static inline uint32_t ptime_to_ms(enum st30_ptime ptime) {
     switch (ptime) {
     case ST30_PTIME_1MS: return 1;
@@ -579,7 +579,7 @@ wt_status_t wt_tx_start(wt_tx_t* pThis) {
 	// 一幀就放一個 packet（最小配置），你也可以改成多個 packet
 	ops_tx.framebuff_cnt  = 8;           // 幀緩衝數量
 	ops_tx.framebuff_size = pkt_size * 1; // 必須是 pkt_size 的整數倍
-    	ops_tx.notify_frame_done = wt_tx30p_frame_done; // 回收 buffer
+    	// ops_tx.notify_frame_done = wt_tx30p_frame_done; // 回收 buffer audio tx crash fixed 20251205
 
     	pThis->session = st30p_tx_create(pThis->mtl, &ops_tx);
     }else {
