@@ -37,6 +37,48 @@ static enum st_fps wt_map_fps(int fps_num, int fps_den) {
     return ST_FPS_MAX; // 其他情況暫不支援
 }
 
+/* 全域 log level 變數 */
+static int g_st2110_mtl_log_level = MTL_LOG_LEVEL_ERROR;  // 預設只顯示錯誤
+static bool g_st2110_disable_stats = true;                 // 預設關閉統計
+
+/* 設定 log level */
+void st2110_set_log_level(st2110_log_level_t level) {
+    switch (level) {
+        case ST2110_LOG_LEVEL_ERROR:
+            g_st2110_mtl_log_level = MTL_LOG_LEVEL_ERROR;
+            g_st2110_disable_stats = true;
+            break;
+        case ST2110_LOG_LEVEL_WARNING:
+            g_st2110_mtl_log_level = MTL_LOG_LEVEL_WARNING;
+            g_st2110_disable_stats = true;
+            break;
+        case ST2110_LOG_LEVEL_INFO:
+            g_st2110_mtl_log_level = MTL_LOG_LEVEL_INFO;
+            g_st2110_disable_stats = false;  // INFO 以上顯示統計
+            break;
+        case ST2110_LOG_LEVEL_DEBUG:
+            g_st2110_mtl_log_level = MTL_LOG_LEVEL_DEBUG;
+            g_st2110_disable_stats = false;
+            break;
+        default:
+            g_st2110_mtl_log_level = MTL_LOG_LEVEL_ERROR;
+            g_st2110_disable_stats = true;
+            break;
+    }
+}
+
+/* 取得 log level */
+st2110_log_level_t st2110_get_log_level(void) {
+    switch (g_st2110_mtl_log_level) {
+        case MTL_LOG_LEVEL_ERROR:   return ST2110_LOG_LEVEL_ERROR;
+        case MTL_LOG_LEVEL_WARNING: return ST2110_LOG_LEVEL_WARNING;
+        case MTL_LOG_LEVEL_INFO:    return ST2110_LOG_LEVEL_INFO;
+        case MTL_LOG_LEVEL_DEBUG:   return ST2110_LOG_LEVEL_DEBUG;
+        default:                     return ST2110_LOG_LEVEL_ERROR;
+    }
+}
+
+
 
 /* ====================== 內部結構 ====================== */
 /* 傳送端結構 */
@@ -164,6 +206,10 @@ wt_status_t wt_tx_create(wt_protocol_t proto, const char* port_name,
     mtl_p.flags |= MTL_FLAG_BIND_NUMA;
     mtl_p.pmd[MTL_PORT_P] = MTL_PMD_KERNEL_SOCKET;
 
+    // ===== 加入這段 =====
+    mtl_p.log_level = g_st2110_mtl_log_level;
+    // ===================
+
     mtl_handle mtl = mtl_init(&mtl_p);
     if (!mtl) return WT_ERR_INIT;
 
@@ -228,6 +274,10 @@ wt_status_t wt_rx_create(wt_protocol_t proto, const char* port_name,
     // 關鍵：啟用 kernel socket 模式
     mtl_p.flags |= MTL_FLAG_BIND_NUMA;
     mtl_p.pmd[MTL_PORT_P] = MTL_PMD_KERNEL_SOCKET;
+
+    // ===== 套用 log level 設定 =====
+    mtl_p.log_level = g_st2110_mtl_log_level;
+    // ================================
 
     mtl_handle mtl = mtl_init(&mtl_p);
     if (!mtl) return WT_ERR_INIT;
@@ -452,7 +502,7 @@ static int wt_tx22_frame_done(void* priv, uint16_t frame_idx,
 
     if (pThis->framebuffs[frame_idx].stat == ST_TX_FRAME_IN_TRANSMITTING) {
         pThis->framebuffs[frame_idx].stat = ST_TX_FRAME_FREE;
-        printf("[WT_TX] frame %u done, buffer released\n", frame_idx);
+        //printf("[WT_TX] frame %u done, buffer released\n", frame_idx);
     } else {
         fprintf(stderr, "[WT_TX] frame_done error: frame %u status=%d\n",
                 frame_idx, pThis->framebuffs[frame_idx].stat);
@@ -497,12 +547,12 @@ static inline uint32_t ptime_to_ms(enum st30_ptime ptime) {
 wt_status_t wt_tx_start(wt_tx_t* pThis) {
     if (!pThis) return WT_ERR_PARAM;
 
-    printf("[DEBUG wt] wt_tx_start: proto=%d (%s)\n", 
-        pThis->proto,
-        (pThis->proto == WT_PROTOCOL_ST22) ? "ST22" :
-        (pThis->proto == WT_PROTOCOL_ST30) ? "ST30" :
-        "UNKNOWN"
-    );
+    //printf("[DEBUG wt] wt_tx_start: proto=%d (%s)\n", 
+    //    pThis->proto,
+    //    (pThis->proto == WT_PROTOCOL_ST22) ? "ST22" :
+    //    (pThis->proto == WT_PROTOCOL_ST30) ? "ST30" :
+    //    "UNKNOWN"
+    //);
 
     if (pThis->proto == WT_PROTOCOL_ST22) {
         /* -------- ST22 Video -------- */
@@ -540,6 +590,7 @@ wt_status_t wt_tx_start(wt_tx_t* pThis) {
 
         ops_tx.get_next_frame = wt_tx22_next_frame;
         ops_tx.notify_frame_done = wt_tx22_frame_done;
+
 
         pThis->session = st22_tx_create(pThis->mtl, &ops_tx);
     }

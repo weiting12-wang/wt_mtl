@@ -44,6 +44,21 @@ typedef enum {
 	WT_CONNECTION_STATUS_DISCONNECTED,
 } wt_connection_status_t;
 
+/* Log Level 定義 */
+typedef enum {
+    ST2110_LOG_LEVEL_ERROR   = 0,  // 只顯示錯誤
+    ST2110_LOG_LEVEL_WARNING = 1,  // 警告和錯誤
+    ST2110_LOG_LEVEL_INFO    = 2,  // 一般資訊
+    ST2110_LOG_LEVEL_DEBUG   = 3   // 所有 debug 資訊
+} st2110_log_level_t;
+
+/* 設定全域 log level（需在任何 init 之前呼叫） */
+void st2110_set_log_level(st2110_log_level_t level);
+
+/* 取得目前 log level */
+st2110_log_level_t st2110_get_log_level(void);
+
+
 /* 不透明 handle 宣告 */
 typedef struct wt_tx wt_tx_t; // opaque TX handle
 typedef struct wt_rx wt_rx_t; // opaque RX handle
