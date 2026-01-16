@@ -131,6 +131,7 @@ struct wt_tx {
     pthread_mutex_t wake_mutex;       /* buffer 鎖 */
     pthread_cond_t  wake_cond;        /* buffer 條件變數 */
 
+    uint64_t last_packet_timestamp;  // 儲存最後一個 packet 的 timestamp
 };
 
 struct wt_rx {
@@ -479,7 +480,13 @@ static int wt_tx22_next_frame(void* priv, uint16_t* next_frame_idx,
         fb->stat = ST_TX_FRAME_IN_TRANSMITTING;
         *next_frame_idx = idx;
         meta->codestream_size = fb->size;  // 已填好的資料大小
-        ret = 0;
+        
+	// ===== 使用應用層的 timestamp =====
+        meta->tfmt = ST10_TIMESTAMP_FMT_MEDIA_CLK;
+        meta->timestamp = tx->last_packet_timestamp;
+        // ===================================
+	
+	ret = 0;
         idx++;
         if (idx >= tx->framebuff_cnt) idx = 0;
         tx->framebuff_consumer_idx = idx;
@@ -591,6 +598,9 @@ wt_status_t wt_tx_start(wt_tx_t* pThis) {
         ops_tx.get_next_frame = wt_tx22_next_frame;
         ops_tx.notify_frame_done = wt_tx22_frame_done;
 
+	// ===== 啟用 user timestamp =====
+    	ops_tx.flags |= ST22_TX_FLAG_USER_TIMESTAMP;
+    	// ================================
 
         pThis->session = st22_tx_create(pThis->mtl, &ops_tx);
     }
@@ -672,6 +682,10 @@ wt_status_t wt_tx_send_packet(wt_tx_t* pThis, wt_packet_t* pPacket) {
         memcpy(frame->addr, pPacket->data, pPacket->size);
         frame->data_size = pPacket->size;
 
+    	// ===== 設定 timestamp =====
+    	frame->timestamp = pPacket->timestamp_ns;
+    	// ==========================
+
         /* 提交 frame */
         st30p_tx_put_frame(pThis->session, frame);
 
@@ -697,7 +711,12 @@ wt_status_t wt_tx_send_packet(wt_tx_t* pThis, wt_packet_t* pPacket) {
 
         memcpy(dst, pPacket->data, pPacket->size);
         framebuff->size = pPacket->size;
-        framebuff->stat = ST_TX_FRAME_READY;
+        
+	// ===== 儲存 timestamp =====
+    	pThis->last_packet_timestamp = pPacket->timestamp_ns;
+    	// ==========================
+	
+	framebuff->stat = ST_TX_FRAME_READY;
 
         pThis->framebuff_producer_idx = (producer_idx + 1) % pThis->framebuff_cnt;
         pthread_cond_signal(&pThis->wake_cond);
